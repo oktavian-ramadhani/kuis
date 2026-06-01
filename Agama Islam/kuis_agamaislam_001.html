@@ -1,0 +1,249 @@
+<!doctype html>
+<html class="h-full">
+ <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz Akhlak Digital</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+  <script src="/_sdk/element_sdk.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+  <style>
+    * { font-family: 'Plus Jakarta Sans', sans-serif; }
+    .card-glow { box-shadow: 0 0 40px rgba(16, 185, 129, 0.1); }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulse-ring { 0% { transform: scale(0.8); opacity: 1; } 100% { transform: scale(1.4); opacity: 0; } }
+    .animate-slide-up { animation: slideUp 0.4s ease-out; }
+    .option-btn { transition: all 0.2s ease; }
+    .option-btn:hover:not(.selected):not(.correct):not(.wrong) { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    .correct { background: #065f46 !important; border-color: #10b981 !important; color: white !important; }
+    .wrong { background: #7f1d1d !important; border-color: #ef4444 !important; color: white !important; }
+    .progress-fill { transition: width 0.5s ease; }
+  </style>
+  <style>body { box-sizing: border-box; }</style>
+  <script src="/_sdk/data_sdk.js" type="text/javascript"></script>
+ <script src="/_sdk/telemetry_sdk.js"></script></head>
+ <body class="h-full">
+  <div id="app" class="h-full w-full overflow-auto" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);"><!-- Start Screen -->
+   <div id="start-screen" class="flex items-center justify-center min-h-full p-6">
+    <div class="text-center max-w-lg animate-slide-up">
+     <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-emerald-500/20 flex items-center justify-center"><i data-lucide="book-open" style="width:48px;height:48px;color:#10b981;"></i>
+     </div>
+     <h1 id="title-el" class="text-4xl font-800 text-white mb-3">Quiz Akhlak Digital</h1>
+     <p id="welcome-el" class="text-slate-400 text-lg mb-8">Uji pemahamanmu tentang akhlak mulia di era digital! 🚀</p>
+     <div class="flex gap-3 justify-center mb-6 text-sm text-slate-500"><span class="flex items-center gap-1"><i data-lucide="help-circle" style="width:16px;height:16px;"></i> 60 Soal</span> <span class="flex items-center gap-1"><i data-lucide="shuffle" style="width:16px;height:16px;"></i> Acak</span> <span class="flex items-center gap-1"><i data-lucide="trophy" style="width:16px;height:16px;"></i> Skor</span>
+     </div><button onclick="startQuiz()" class="px-8 py-4 bg-emerald-500 hover:bg-emerald-400 text-white font-700 rounded-2xl text-lg transition-all hover:scale-105 hover:shadow-lg hover:shadow-emerald-500/25"> Mulai Quiz </button>
+    </div>
+   </div><!-- Quiz Screen -->
+   <div id="quiz-screen" class="hidden min-h-full p-4 md:p-6 flex flex-col items-center justify-center">
+    <div class="w-full max-w-2xl animate-slide-up"><!-- Header -->
+     <div class="flex items-center justify-between mb-4"><span id="q-counter" class="text-emerald-400 font-600 text-sm">Soal 1/60</span> <span id="score-display" class="text-slate-400 text-sm flex items-center gap-1"><i data-lucide="star" style="width:14px;height:14px;color:#fbbf24;"></i> <span id="score-num">0</span></span>
+     </div><!-- Progress -->
+     <div class="w-full h-2 bg-slate-700 rounded-full mb-6 overflow-hidden">
+      <div id="progress-bar" class="h-full bg-gradient-to-r from-emerald-500 to-teal-400 rounded-full progress-fill" style="width:0%"></div>
+     </div><!-- Question -->
+     <div class="card-glow bg-slate-800/80 backdrop-blur rounded-3xl p-6 md:p-8 border border-slate-700">
+      <p id="question-text" class="text-white text-lg md:text-xl font-600 leading-relaxed mb-6"></p>
+      <div id="options-container" class="space-y-3"></div>
+     </div><!-- Next Button -->
+     <div class="text-center mt-6"><button id="next-btn" onclick="nextQuestion()" class="hidden px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-white font-600 rounded-xl transition-all hover:scale-105"> Selanjutnya <span>→</span> </button>
+     </div>
+    </div>
+   </div><!-- Result Screen -->
+   <div id="result-screen" class="hidden min-h-full p-6 flex items-center justify-center">
+    <div class="text-center max-w-lg animate-slide-up">
+     <div id="result-icon" class="w-28 h-28 mx-auto mb-6 rounded-full flex items-center justify-center"></div>
+     <h2 id="result-title" class="text-3xl font-800 text-white mb-2"></h2>
+     <p id="result-score" class="text-5xl font-800 text-emerald-400 mb-2"></p>
+     <p id="result-msg" class="text-slate-400 mb-8"></p>
+     <div class="flex gap-3 justify-center"><button onclick="startQuiz()" class="px-6 py-3 bg-emerald-500 hover:bg-emerald-400 text-white font-600 rounded-xl transition-all hover:scale-105">Ulangi Quiz</button> <button onclick="showStart()" class="px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white font-600 rounded-xl transition-all">Menu</button>
+     </div>
+    </div>
+   </div>
+  </div>
+  <script>
+const allQuestions = [
+  {q:"Apa definisi sederhana dari 'Akhlak' menurut materi sosialisasi?",a:"Cara seseorang bersikap ketika dilihat maupun tidak dilihat oleh orang lain.",options:["Ilmu tentang hukum Islam","Cara seseorang bersikap ketika dilihat maupun tidak dilihat oleh orang lain.","Kemampuan membaca Al-Qur'an dengan baik","Tata cara beribadah sehari-hari"]},
+  {q:"Sebutkan empat sifat Rasulullah SAW yang menjadi teladan akhlak utama.",a:"Shiddiq, Amanah, Tabligh, dan Fathanah.",options:["Shiddiq, Amanah, Tabligh, dan Fathanah.","Sabar, Syukur, Tawakkal, dan Ikhlas","Zuhud, Wara', Qana'ah, dan Tawadhu'","Iman, Islam, Ihsan, dan Taqwa"]},
+  {q:"Sifat Rasulullah yang berarti 'Jujur' dan tidak melakukan manipulasi adalah...",a:"Shiddiq",options:["Amanah","Tabligh","Shiddiq","Fathanah"]},
+  {q:"Apa perwujudan sifat 'Amanah' bagi seorang siswa muslim?",a:"Dapat dipercaya dalam menjaga tugas, rahasia, dan kepercayaan guru serta orang tua.",options:["Selalu berkata jujur di depan teman","Dapat dipercaya dalam menjaga tugas, rahasia, dan kepercayaan guru serta orang tua.","Berani menegur teman yang salah","Pandai dalam semua mata pelajaran"]},
+  {q:"Sifat 'Tabligh' dalam konteks pergaulan siswa berarti...",a:"Berani menyampaikan atau mengingatkan kebaikan dengan bahasa yang santun.",options:["Berani menyampaikan atau mengingatkan kebaikan dengan bahasa yang santun.","Selalu diam dan tidak ikut campur urusan orang lain","Menyebarkan informasi seluas-luasnya","Menjadi pemimpin di setiap kelompok"]},
+  {q:"Sifat 'Fathanah' mendorong siswa untuk cerdas dalam hal apa?",a:"Memakai akal untuk memilih konten, teman, dan kebiasaan yang baik.",options:["Mendapat nilai tertinggi di kelas","Memakai akal untuk memilih konten, teman, dan kebiasaan yang baik.","Menghafal semua pelajaran tanpa berpikir kritis","Mengalahkan teman dalam kompetisi"]},
+  {q:"Apa pesan utama mengenai penggunaan HP sebagai 'Alat'?",a:"HP bisa menjadi pahala (sahabat) atau masalah (ujian) tergantung cara memakainya.",options:["HP harus dilarang untuk anak sekolah","HP bisa menjadi pahala (sahabat) atau masalah (ujian) tergantung cara memakainya.","HP hanya boleh digunakan untuk belajar","HP adalah kebutuhan primer siswa"]},
+  {q:"Prinsip utama sebelum membagikan informasi di media sosial adalah...",a:"Saring sebelum sharing",options:["Share dulu baru cek","Saring sebelum sharing","Viral adalah prioritas","Semakin banyak share semakin baik"]},
+  {q:"Sebutkan tiga pertanyaan filter 'KIRIM?' sebelum mengirim komentar.",a:"Apakah ini benar? Apakah ini baik? Apakah ini perlu?",options:["Apakah ini benar? Apakah ini baik? Apakah ini perlu?","Apakah ini viral? Apakah ini lucu? Apakah ini menarik?","Apakah ini baru? Apakah ini trendi? Apakah ini populer?","Apakah ini singkat? Apakah ini jelas? Apakah ini menarik?"]},
+  {q:"Apa yang dimaksud dengan 'Ghibah Digital'?",a:"Membicarakan keburukan orang lain melalui komentar, story, atau grup chat.",options:["Membuat konten positif di media sosial","Membicarakan keburukan orang lain melalui komentar, story, atau grup chat.","Berdiskusi tentang pelajaran secara online","Membagikan informasi bermanfaat"]},
+  {q:"Istilah untuk candaan atau tindakan digital yang membuat orang malu, sedih, atau takut adalah...",a:"Cyberbullying",options:["Cyber safety","Cyberbullying","Digital literacy","Netiquette"]},
+  {q:"Dalam strategi 'Resep 4B', apa makna dari langkah 'Bismillah'?",a:"Mengawali setiap aktivitas digital dengan niat baik.",options:["Membaca doa sebelum tidur","Mengawali setiap aktivitas digital dengan niat baik.","Memulai pelajaran di sekolah","Berdoa sebelum makan"]},
+  {q:"Langkah 'Batasi' dalam 'Resep 4B' bertujuan untuk...",a:"Menentukan waktu antara belajar, istirahat, ibadah, dan hiburan.",options:["Membatasi jumlah teman di media sosial","Menentukan waktu antara belajar, istirahat, ibadah, dan hiburan.","Membatasi jumlah postingan per hari","Mengurangi jumlah aplikasi di HP"]},
+  {q:"Apa fokus dari langkah 'Bijak' dalam strategi 'Resep 4B'?",a:"Memilih konten dan kata-kata yang tidak merusak diri sendiri atau orang lain.",options:["Memilih konten dan kata-kata yang tidak merusak diri sendiri atau orang lain.","Memilih HP dengan harga termurah","Memilih teman yang populer di sekolah","Memilih game yang paling seru"]},
+  {q:"Gunakan teknologi untuk belajar, membantu, dan berkarya merupakan penerapan langkah _____ dalam 'Resep 4B'.",a:"Bermanfaat",options:["Bismillah","Batasi","Bijak","Bermanfaat"]},
+  {q:"Berikan contoh adab chat yang baik saat menghubungi guru.",a:"Mengucapkan salam, memohon izin bertanya, menggunakan bahasa sopan, dan berterima kasih.",options:["Langsung bertanya tanpa salam","Mengucapkan salam, memohon izin bertanya, menggunakan bahasa sopan, dan berterima kasih.","Mengirim pesan singkat tanpa konteks","Menggunakan emoji sebanyak-banyaknya"]},
+  {q:"Apa sikap terbaik menurut Islam jika melihat teman direndahkan di grup chat?",a:"Mengingatkan dengan bahasa baik dan tidak ikut menyebarkan konten tersebut.",options:["Diam saja agar tidak terlibat masalah","Ikut berkomentar agar tidak dikucilkan","Mengingatkan dengan bahasa baik dan tidak ikut menyebarkan konten tersebut.","Keluar dari grup tanpa berkata apa-apa"]},
+  {q:"Bagaimana cara memposisikan prioritas saat waktu salat tiba di tengah game online?",a:"Berhenti sebentar, izin baik-baik kepada tim, dan melaksanakan salat tepat waktu.",options:["Menyelesaikan game dulu baru salat","Berhenti sebentar, izin baik-baik kepada tim, dan melaksanakan salat tepat waktu.","Salat sambil tetap bermain","Meminta teman menggantikan"]},
+  {q:"Penerapan Kurikulum Merdeka menguatkan karakter melalui dimensi Profil Pelajar Pancasila, khususnya...",a:"Beriman, bertakwa kepada Tuhan Yang Maha Esa, dan berakhlak mulia.",options:["Berkebinekaan global","Bergotong royong","Beriman, bertakwa kepada Tuhan Yang Maha Esa, dan berakhlak mulia.","Bernalar kritis"]},
+  {q:"Apa tujuan utama kegiatan pengabdian masyarakat di SMP Negeri 7 Surakarta?",a:"Membentuk siswa muslim yang berakhlak mulia, bijak digital, dan produktif.",options:["Meningkatkan nilai ujian nasional","Membentuk siswa muslim yang berakhlak mulia, bijak digital, dan produktif.","Menghafal seluruh isi Al-Qur'an","Menjadikan siswa ahli teknologi"]},
+  {q:"Mengapa siswa usia SMP dianggap berada pada fase perkembangan yang rentan?",a:"Karena mereka berada dalam masa pencarian jati diri dan mudah terpengaruh lingkungan serta internet.",options:["Karena mereka belum bisa membaca","Karena mereka berada dalam masa pencarian jati diri dan mudah terpengaruh lingkungan serta internet.","Karena mereka tidak memiliki HP","Karena mereka tidak suka belajar"]},
+  {q:"Menurut data APJII 2026, tingkat penetrasi internet pada kelompok pendidikan SMP sederajat adalah...",a:"82,48%",options:["50,25%","67,30%","82,48%","95,10%"]},
+  {q:"Sebutkan satu contoh pemanfaatan teknologi untuk aspek 'Ibadah'.",a:"Menggunakan aplikasi pengingat salat, murottal, atau kajian singkat.",options:["Bermain game online sepanjang hari","Menggunakan aplikasi pengingat salat, murottal, atau kajian singkat.","Menonton film tanpa batas waktu","Scroll media sosial terus-menerus"]},
+  {q:"Apa yang dimaksud dengan 'Produktivitas' dalam konteks siswa muslim di era digital?",a:"Kemampuan memanfaatkan waktu dan teknologi untuk kegiatan yang bernilai positif dan bermanfaat.",options:["Menghasilkan uang sebanyak-banyaknya","Kemampuan memanfaatkan waktu dan teknologi untuk kegiatan yang bernilai positif dan bermanfaat.","Menyelesaikan game level tertinggi","Memiliki followers terbanyak"]},
+  {q:"Kutipan ayat Al-Qur'an yang menjadi landasan akhlak agung Rasulullah adalah...",a:"QS. Al-Qalam ayat 4",options:["QS. Al-Baqarah ayat 255","QS. Al-Qalam ayat 4","QS. Al-Ikhlas ayat 1","QS. An-Nisa ayat 59"]},
+  {q:"Apa risiko utama penggunaan media sosial bagi anak-anak menurut UNICEF Indonesia?",a:"Risiko keamanan, etika, dan tanggung jawab yang tidak seimbang dengan peluang digital.",options:["Risiko keamanan, etika, dan tanggung jawab yang tidak seimbang dengan peluang digital.","Risiko kehabisan kuota internet","Risiko ketinggalan tren terbaru","Risiko tidak punya teman online"]},
+  {q:"Sebutkan satu contoh nyata perilaku 'Fathanah' dalam berinternet.",a:"Mengecek kebenaran sumber berita (cek fakta) sebelum mempercayainya.",options:["Langsung percaya berita viral","Mengecek kebenaran sumber berita (cek fakta) sebelum mempercayainya.","Membagikan semua berita tanpa filter","Mengikuti semua akun populer"]},
+  {q:"Apa ciri siswa muslim yang 'Amanah' saat mendapatkan tugas sekolah?",a:"Mengerjakan tugas dengan jujur tanpa mencontek dan mengumpulkannya tepat waktu.",options:["Menyalin pekerjaan teman","Mengerjakan tugas dengan jujur tanpa mencontek dan mengumpulkannya tepat waktu.","Meminta orang lain mengerjakan","Mengumpulkan tugas seadanya"]},
+  {q:"Mengapa menjaga privasi termasuk dalam akhlak digital?",a:"Karena merupakan bentuk menjaga amanah dan kehormatan diri sendiri.",options:["Karena data bisa dijual mahal","Karena merupakan bentuk menjaga amanah dan kehormatan diri sendiri.","Karena privasi tidak penting","Karena semua orang melakukannya"]},
+  {q:"Dalam rencana satu hari produktif, apa kunci agar semua kegiatan berjalan seimbang?",a:"Menyeimbangkan ibadah, belajar, dan bantuan kepada orang tua dengan hiburan yang dibatasi.",options:["Bermain game sepanjang hari","Belajar tanpa istirahat","Menyeimbangkan ibadah, belajar, dan bantuan kepada orang tua dengan hiburan yang dibatasi.","Hanya fokus pada satu kegiatan"]},
+  {q:"Apa dampak negatif penyebaran hoaks atau fitnah bagi orang lain?",a:"Dapat merugikan reputasi orang lain dan menimbulkan perpecahan.",options:["Tidak ada dampak sama sekali","Dapat merugikan reputasi orang lain dan menimbulkan perpecahan.","Membuat orang terkenal","Meningkatkan engagement media sosial"]},
+  {q:"Metode 'Rumus Aman' dalam menghadapi tantangan digital: Stop dulu, Pikirkan, _____, baru bertindak.",a:"Cek kebenaran",options:["Bagikan segera","Cek kebenaran","Abaikan saja","Laporkan langsung"]},
+  {q:"Apa perwujudan akhlak mulia kepada teman di sekolah?",a:"Tidak mengejek fisik/keluarga dan membantu teman yang kesulitan.",options:["Bersaing mengalahkan semua teman","Tidak mengejek fisik/keluarga dan membantu teman yang kesulitan.","Menjauhi teman yang berbeda","Hanya berteman dengan yang pintar"]},
+  {q:"Mengapa sapaan dan salam kepada guru termasuk dalam penguatan karakter?",a:"Karena menghormati guru adalah bagian dari adab menuntut ilmu dalam Islam.",options:["Karena itu aturan sekolah saja","Karena menghormati guru adalah bagian dari adab menuntut ilmu dalam Islam.","Karena guru akan memberi nilai bagus","Karena semua orang melakukannya"]},
+  {q:"Siswa yang menggunakan YouTube untuk belajar matematika merupakan contoh penggunaan HP sebagai...",a:"Sahabat (Alat bantu belajar)",options:["Sahabat (Alat bantu belajar)","Ujian (Sumber masalah)","Hiburan semata","Alat komunikasi saja"]},
+  {q:"Apa yang harus dilakukan siswa untuk menghindari kecanduan gawai?",a:"Menerapkan jadwal disiplin dan mengurangi scroll media sosial yang tidak bermanfaat.",options:["Membuang HP ke tempat sampah","Menerapkan jadwal disiplin dan mengurangi scroll media sosial yang tidak bermanfaat.","Tidak pernah menyentuh HP","Bermain HP hanya di malam hari"]},
+  {q:"Komitmen 'Aku akan mengecek informasi sebelum membagikannya' merupakan bentuk refleksi dari materi...",a:"Etika Bermedia Digital (Saring sebelum Sharing)",options:["Tata cara wudhu","Etika Bermedia Digital (Saring sebelum Sharing)","Cara membuat konten viral","Aturan bermain game"]},
+  {q:"Berdasarkan visi SMPN 7 Surakarta, pendidikan diharapkan membentuk insan yang berkarakter dan berlandaskan...",a:"Iman dan Takwa",options:["Kekayaan material","Iman dan Takwa","Popularitas sosial","Teknologi canggih"]},
+  {q:"Siapa mitra utama dalam kegiatan pengabdian masyarakat Universitas BSI ini?",a:"SMP Negeri 7 Surakarta",options:["SMP Negeri 1 Jakarta","SMP Negeri 7 Surakarta","SMA Negeri 3 Bandung","Universitas Gadjah Mada"]},
+  {q:"Apa peranan yel-yel 'Berakhlak dan Produktif' dalam sosialisasi?",a:"Sebagai kode semangat dan pengingat identitas siswa muslim yang ideal.",options:["Hanya untuk hiburan saja","Sebagai kode semangat dan pengingat identitas siswa muslim yang ideal.","Untuk mengisi waktu kosong","Sebagai syarat kelulusan"]},
+  {q:"Menghindari ujaran kebencian di kolom komentar merupakan bentuk penjagaan terhadap...",a:"Lisan (dalam bentuk tulisan)",options:["Harta benda","Lisan (dalam bentuk tulisan)","Penampilan fisik","Nilai akademik"]},
+  {q:"Sebutkan satu manfaat teknologi dalam aspek 'Inovasi' bagi siswa.",a:"Membuat desain, video edukasi, atau proyek kreatif digital.",options:["Menonton film tanpa henti","Membuat desain, video edukasi, atau proyek kreatif digital.","Bermain game seharian","Scroll TikTok berjam-jam"]},
+  {q:"Apa konsekuensi jika seseorang tidak menjaga adab di ruang digital?",a:"Dapat merusak citra diri dan menyakiti perasaan orang lain di dunia nyata.",options:["Tidak ada konsekuensi","Dapat merusak citra diri dan menyakiti perasaan orang lain di dunia nyata.","Hanya berdampak di dunia maya","Membuat orang menjadi terkenal"]},
+  {q:"Mengapa niat 'Bismillah' penting dalam membuka HP?",a:"Agar aktivitas digital bernilai ibadah dan terhindar dari konten negatif.",options:["Agar HP tidak rusak","Agar aktivitas digital bernilai ibadah dan terhindar dari konten negatif.","Agar sinyal lebih kuat","Agar baterai awet"]},
+  {q:"Seorang siswa muslim yang cerdas (Fathanah) akan menggunakan internet untuk mencari...",a:"Referensi pelajaran atau sumber pengetahuan yang bermanfaat.",options:["Gosip terbaru artis","Referensi pelajaran atau sumber pengetahuan yang bermanfaat.","Game ilegal gratis","Cara bolos sekolah"]},
+  {q:"Apa tindakan yang mencerminkan akhlak kepada diri sendiri?",a:"Menjaga waktu salat dan menghindari kebiasaan yang merusak kesehatan mental/fisik.",options:["Begadang setiap malam","Menjaga waktu salat dan menghindari kebiasaan yang merusak kesehatan mental/fisik.","Makan junk food terus-menerus","Tidak pernah berolahraga"]},
+  {q:"Bagaimana cara menyikapi perbedaan pendapat di media sosial dengan bahasa yang baik?",a:"Menyampaikan argumen secara sopan tanpa menghina pribadi lawan bicara.",options:["Memblokir semua yang berbeda pendapat","Menyampaikan argumen secara sopan tanpa menghina pribadi lawan bicara.","Menghujat dengan kata-kata kasar","Membuat akun palsu untuk menyerang"]},
+  {q:"Apa arti 'Tabligh' jika diterapkan dalam pembuatan konten media sosial?",a:"Membuat konten yang berisi ajakan kebaikan atau inspirasi positif bagi orang lain.",options:["Membuat konten viral apapun caranya","Membuat konten yang berisi ajakan kebaikan atau inspirasi positif bagi orang lain.","Mengcopy konten orang lain","Membuat konten yang kontroversial"]},
+  {q:"Sebutkan indikator bahwa seorang siswa sudah produktif di era digital.",a:"Mampu menyeimbangkan antara tanggung jawab sekolah, ibadah, dan penggunaan teknologi untuk berkarya.",options:["Memiliki banyak followers","Mampu menyeimbangkan antara tanggung jawab sekolah, ibadah, dan penggunaan teknologi untuk berkarya.","Online 24 jam sehari","Punya HP termahal"]},
+  {q:"Apa langkah akhir dalam kegiatan sosialisasi untuk memastikan perubahan perilaku siswa?",a:"Refleksi dan pembuatan komitmen perubahan diri.",options:["Ujian tertulis","Refleksi dan pembuatan komitmen perubahan diri.","Membuat akun media sosial baru","Menghapus semua aplikasi"]},
+  {q:"Sifat 'Shiddiq' (Jujur) di era digital berarti tidak menyebarkan berita yang bersifat...",a:"Hoaks atau dusta",options:["Hoaks atau dusta","Positif dan benar","Bermanfaat","Islami"]},
+  {q:"Mengapa adab lebih diutamakan sebelum ilmu dalam pendidikan Islam?",a:"Karena akhlak mulia membuat seseorang pantas dihormati dan ilmu yang dimiliki menjadi berkah.",options:["Karena ilmu tidak penting","Karena akhlak mulia membuat seseorang pantas dihormati dan ilmu yang dimiliki menjadi berkah.","Karena adab lebih mudah dipelajari","Karena guru hanya mengajarkan adab"]},
+  {q:"Apa contoh penggunaan internet untuk aspek 'Inspirasi'?",a:"Mengikuti akun tokoh motivasi atau konten dakwah yang mendidik.",options:["Mengikuti akun gosip selebriti","Mengikuti akun tokoh motivasi atau konten dakwah yang mendidik.","Menonton konten prank","Mengikuti akun jualan online"]},
+  {q:"Membantu teman yang kesulitan memahami tugas melalui chat adalah contoh...",a:"Akhlak mulia dalam interaksi digital kepada sesama.",options:["Buang-buang waktu","Akhlak mulia dalam interaksi digital kepada sesama.","Pamer kepintaran","Mencari perhatian guru"]},
+  {q:"Apa tujuan dari metode 'Studi Kasus Sederhana' dalam sosialisasi ini?",a:"Menghubungkan materi dengan situasi nyata yang sering dialami siswa sehari-hari.",options:["Membuat siswa bingung","Menghubungkan materi dengan situasi nyata yang sering dialami siswa sehari-hari.","Menguji hafalan siswa","Memberikan tugas tambahan"]},
+  {q:"Profil Pelajar Pancasila yang beriman dan bertakwa diwujudkan dalam lima akhlak, yaitu beragama, pribadi, sesama manusia, alam, dan...",a:"Berbangsa dan bernegara",options:["Berteknologi","Berbangsa dan bernegara","Berorganisasi","Berwirausaha"]},
+  {q:"Apa sanksi moral bagi penyebar cyberbullying dalam lingkungan sekolah?",a:"Kehilangan kepercayaan teman, teguran sekolah, dan beban dosa dalam pandangan agama.",options:["Tidak ada sanksi apapun","Kehilangan kepercayaan teman, teguran sekolah, dan beban dosa dalam pandangan agama.","Hanya diperingatkan sekali","Mendapat popularitas"]},
+  {q:"Istilah untuk berita viral yang belum jelas sumbernya namun sudah disebarkan secara masif disebut...",a:"Hoaks",options:["Breaking news","Hoaks","Opini","Editorial"]},
+  {q:"Mengapa siswa harus 'Berhenti sebentar' saat menerima informasi yang memicu emosi?",a:"Agar bisa berpikir jernih (tabayyun) dan tidak terburu-buru menghakimi atau menyebar fitnah.",options:["Agar bisa berpikir jernih (tabayyun) dan tidak terburu-buru menghakimi atau menyebar fitnah.","Agar bisa mencari informasi yang lebih menyenangkan","Agar bisa menyiapkan balasan yang lebih pedas","Agar terlihat cool dan tidak emosional"]},
+  {q:"Apa makna 'Bermanfaat' bagi siswa muslim yang gemar bermain game?",a:"Boleh bermain sebagai hiburan, asalkan tidak melalaikan salat, tugas, dan tetap menjaga sopan santun.",options:["Game haram dan harus dihindari","Boleh bermain sebagai hiburan, asalkan tidak melalaikan salat, tugas, dan tetap menjaga sopan santun.","Bermain game sepuasnya tanpa batas","Game hanya untuk orang dewasa"]}
+];
+
+let questions = [], currentQ = 0, score = 0, answered = false;
+
+const defaultConfig = {
+  quiz_title: "Quiz Akhlak Digital",
+  welcome_message: "Uji pemahamanmu tentang akhlak mulia di era digital! 🚀",
+  background_color: "#0f172a",
+  surface_color: "#1e293b",
+  text_color: "#f8fafc",
+  primary_color: "#10b981",
+  secondary_color: "#64748b",
+  font_family: "Plus Jakarta Sans",
+  font_size: 16
+};
+
+function shuffle(arr) { for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];} return arr; }
+
+function startQuiz() {
+  questions = shuffle([...allQuestions]).slice(0, 20);
+  questions.forEach(q => q.options = shuffle([...q.options]));
+  currentQ = 0; score = 0; answered = false;
+  document.getElementById('start-screen').classList.add('hidden');
+  document.getElementById('result-screen').classList.add('hidden');
+  document.getElementById('quiz-screen').classList.remove('hidden');
+  renderQuestion();
+}
+
+function showStart() {
+  document.getElementById('quiz-screen').classList.add('hidden');
+  document.getElementById('result-screen').classList.add('hidden');
+  document.getElementById('start-screen').classList.remove('hidden');
+}
+
+function renderQuestion() {
+  answered = false;
+  const q = questions[currentQ];
+  document.getElementById('q-counter').textContent = `Soal ${currentQ+1}/${questions.length}`;
+  document.getElementById('score-num').textContent = score;
+  document.getElementById('progress-bar').style.width = `${((currentQ)/questions.length)*100}%`;
+  document.getElementById('question-text').textContent = q.q;
+  document.getElementById('next-btn').classList.add('hidden');
+  const container = document.getElementById('options-container');
+  container.innerHTML = '';
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option-btn w-full text-left p-4 rounded-xl border border-slate-600 bg-slate-700/50 text-slate-200 font-500 text-sm md:text-base';
+    btn.textContent = opt;
+    btn.onclick = () => selectAnswer(btn, opt, q.a);
+    container.appendChild(btn);
+  });
+}
+
+function selectAnswer(btn, selected, correct) {
+  if(answered) return;
+  answered = true;
+  const btns = document.querySelectorAll('.option-btn');
+  btns.forEach(b => {
+    if(b.textContent === correct) b.classList.add('correct');
+    if(b === btn && selected !== correct) b.classList.add('wrong');
+  });
+  if(selected === correct) score++;
+  document.getElementById('score-num').textContent = score;
+  document.getElementById('next-btn').classList.remove('hidden');
+}
+
+function nextQuestion() {
+  currentQ++;
+  if(currentQ >= questions.length) { showResult(); return; }
+  document.getElementById('quiz-screen').querySelector('.max-w-2xl').classList.remove('animate-slide-up');
+  void document.getElementById('quiz-screen').querySelector('.max-w-2xl').offsetWidth;
+  document.getElementById('quiz-screen').querySelector('.max-w-2xl').classList.add('animate-slide-up');
+  renderQuestion();
+}
+
+function showResult() {
+  document.getElementById('quiz-screen').classList.add('hidden');
+  document.getElementById('result-screen').classList.remove('hidden');
+  const pct = Math.round((score/questions.length)*100);
+  document.getElementById('result-score').textContent = `${score}/${questions.length}`;
+  const icon = document.getElementById('result-icon');
+  if(pct >= 80) { icon.innerHTML='<span style="font-size:56px">🏆</span>'; icon.style.background='rgba(16,185,129,0.2)'; document.getElementById('result-title').textContent='Masya Allah!'; document.getElementById('result-msg').textContent='Kamu memahami akhlak digital dengan sangat baik!'; }
+  else if(pct >= 60) { icon.innerHTML='<span style="font-size:56px">⭐</span>'; icon.style.background='rgba(251,191,36,0.2)'; document.getElementById('result-title').textContent='Bagus!'; document.getElementById('result-msg').textContent='Terus pelajari dan terapkan akhlak mulia di era digital.'; }
+  else { icon.innerHTML='<span style="font-size:56px">📖</span>'; icon.style.background='rgba(99,102,241,0.2)'; document.getElementById('result-title').textContent='Semangat Belajar!'; document.getElementById('result-msg').textContent='Yuk pelajari kembali materi akhlak digital agar lebih paham.'; }
+  document.getElementById('progress-bar').style.width='100%';
+}
+
+// Element SDK
+window.elementSdk.init({
+  defaultConfig,
+  onConfigChange: async (config) => {
+    const font = config.font_family || defaultConfig.font_family;
+    const size = config.font_size || defaultConfig.font_size;
+    document.body.style.fontFamily = `${font}, sans-serif`;
+    document.getElementById('title-el').textContent = config.quiz_title || defaultConfig.quiz_title;
+    document.getElementById('welcome-el').textContent = config.welcome_message || defaultConfig.welcome_message;
+    document.getElementById('title-el').style.fontSize = `${size * 2.2}px`;
+    document.getElementById('welcome-el').style.fontSize = `${size * 1.1}px`;
+    const app = document.getElementById('app');
+    app.style.background = `linear-gradient(135deg, ${config.background_color || defaultConfig.background_color} 0%, ${config.surface_color || defaultConfig.surface_color} 50%, ${config.background_color || defaultConfig.background_color} 100%)`;
+    document.querySelectorAll('.option-btn').forEach(b => { if(!b.classList.contains('correct')&&!b.classList.contains('wrong')) b.style.borderColor = config.secondary_color || defaultConfig.secondary_color; });
+  },
+  mapToCapabilities: (config) => ({
+    recolorables: [
+      { get:()=>config.background_color||defaultConfig.background_color, set:(v)=>{config.background_color=v;window.elementSdk.setConfig({background_color:v})} },
+      { get:()=>config.surface_color||defaultConfig.surface_color, set:(v)=>{config.surface_color=v;window.elementSdk.setConfig({surface_color:v})} },
+      { get:()=>config.text_color||defaultConfig.text_color, set:(v)=>{config.text_color=v;window.elementSdk.setConfig({text_color:v})} },
+      { get:()=>config.primary_color||defaultConfig.primary_color, set:(v)=>{config.primary_color=v;window.elementSdk.setConfig({primary_color:v})} },
+      { get:()=>config.secondary_color||defaultConfig.secondary_color, set:(v)=>{config.secondary_color=v;window.elementSdk.setConfig({secondary_color:v})} }
+    ],
+    borderables: [],
+    fontEditable: { get:()=>config.font_family||defaultConfig.font_family, set:(v)=>{config.font_family=v;window.elementSdk.setConfig({font_family:v})} },
+    fontSizeable: { get:()=>config.font_size||defaultConfig.font_size, set:(v)=>{config.font_size=v;window.elementSdk.setConfig({font_size:v})} }
+  }),
+  mapToEditPanelValues: (config) => new Map([
+    ["quiz_title", config.quiz_title || defaultConfig.quiz_title],
+    ["welcome_message", config.welcome_message || defaultConfig.welcome_message]
+  ])
+});
+
+lucide.createIcons();
+</script>
+ <script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'a04f19e75d3e8be4',t:'MTc4MDMyNjE2NQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
